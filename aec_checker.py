@@ -50,10 +50,17 @@ with open('input.csv') as csvfile:
             time.sleep(1)
             elem = driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_textVerificationCode")
             if len(elem.get_attribute("value")) == 4:
-                captcha_entered = True
+                driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_buttonVerify").click()
 
-        elem = driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_buttonVerify")
-        elem.click()
+                try:
+                    # Look for the first name tag, if it exist the captcha failed
+                    driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_textGivenName")
+                except Exception:
+                    # Otherwise we're good. (why is a success state in an exception, brah)
+                    captcha_entered = True
+
+                if not captcha_entered:
+                    driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_textVerificationCode").send_keys("")
 
         try:
             elem = driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_linkProfile")
