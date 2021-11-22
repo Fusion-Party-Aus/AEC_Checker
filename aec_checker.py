@@ -11,7 +11,7 @@ writer = csv.writer(open('output.csv', 'w', newline='',))
 
 count = 0
 with open('input.csv') as csvfile:
-    spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    spamreader = csv.reader(csvfile, delimiter=',')
     for row in spamreader:
         count += 1
         if count == 1:
