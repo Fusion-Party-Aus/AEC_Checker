@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# OS-specific
+.DS_Store
+
+###### Don't accidentally commit CSVs #######
+*.csv
