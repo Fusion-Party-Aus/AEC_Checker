@@ -32,8 +32,7 @@ streetTypes = {
     "BOULEVARD": "BLVD",
     "SQUARE": "SQ",
     "TERRACE": "TCE",
-    "CRESCENT": "CR",
-    "CRES": "CR",
+    "CRESCENT": "CRES",
     "GROVE": "GR",
     "HIGHWAY": "HWY",
     "LANE": "LANE",
@@ -55,7 +54,7 @@ def convert_address(state, origAddress):
     streetName = ""
     streetType = ""
 
-    rev = (address[::-1]).upper()
+    rev = (origAddress[::-1]).upper()
     rev = re.sub(r"[,']", "", rev)
 
     matchme = revAddressSplitter.match(rev)
