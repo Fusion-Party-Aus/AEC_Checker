@@ -13,7 +13,7 @@ parser.add_argument('--infile', default='input.csv')
 parser.add_argument('--outfile', default='output.csv')
 args = parser.parse_args()
 
-driver= webdriver.Firefox();
+driver = webdriver.Firefox();
 driver.get('https://check.aec.gov.au/')
 
 writer = csv.writer(open(args.outfile, 'a', newline='',))
@@ -48,7 +48,7 @@ with open(args.infile) as csvfile:
             suburb_dropdown = Select(driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_DropdownSuburb"))
             suburb_dropdown.select_by_value(suburb_state)
         except Exception:
-            row.append("Fail")
+            row.append("Fail_suburb")
             row.append("")
             writer.writerow(row)
             continue
@@ -93,7 +93,14 @@ with open(args.infile) as csvfile:
             driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_buttonBack").click()
             
         except Exception:
-            row.append("Fail")
+            try:
+                reason = driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_labelFailedReason")
+                if "partial" in reason.text:
+                    row.append("Partial")
+                else:
+                    row.append("Fail")
+            except Exception:
+                row.append("Fail")
             row.append("")
             writer.writerow(row)
             driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_buttonTryAgain").click()
