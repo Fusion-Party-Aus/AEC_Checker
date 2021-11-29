@@ -1,5 +1,5 @@
 #!python3
-from selenium import webdriver;
+from selenium import webdriver
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
@@ -13,7 +13,7 @@ parser.add_argument('--infile', default='input.csv')
 parser.add_argument('--outfile', default='output.csv')
 args = parser.parse_args()
 
-driver = webdriver.Firefox();
+driver = webdriver.Firefox()
 driver.get('https://check.aec.gov.au/')
 
 writer = csv.writer(open(args.outfile, 'a', newline='',))
@@ -97,6 +97,8 @@ with open(args.infile) as csvfile:
                 reason = driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_labelFailedReason")
                 if "partial" in reason.text:
                     row.append("Partial")
+                elif "street" in reason.text:
+                    row.append("Fail_street")
                 else:
                     row.append("Fail")
             except Exception:
