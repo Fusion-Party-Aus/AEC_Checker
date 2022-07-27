@@ -44,7 +44,6 @@ streetTypes = {
 stateShorts = set(stateAbs.values())
 streetShorts = set(streetTypes.values())
 
-
 def convert_address(state, origAddress):
     """Normalises states to abbreviation, and
     extracts normalised street names from addresses.
