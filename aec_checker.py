@@ -11,7 +11,6 @@ import collections
 from enum import Enum
 import sys
 
-
 class AECResult(Enum):
     PASS = "Pass"
     PARTIAL = "Partial"
@@ -169,7 +168,7 @@ def main():
             if count <= 1 + args.skip:
                 writer.writerow(row)
                 continue
-            time.sleep(0.1)
+            time.sleep(0.5)
             status = getAECStatus(driver, *row[:6])
             writer.writerow(row + [i for i in status])
     writer.close()

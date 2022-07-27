@@ -44,7 +44,6 @@ streetTypes = {
 stateShorts = set(stateAbs.values())
 streetShorts = set(streetTypes.values())
 
-
 def convert_address(state, origAddress):
     """Normalises states to abbreviation, and
     extracts normalised street names from addresses.
@@ -63,8 +62,7 @@ def convert_address(state, origAddress):
     streetName = " ".join(street[:-1])
     streetType = street[-1]
 
-    if len(state) > 3 or not state in stateShorts:
-        state = stateAbs[state.upper().strip()]
+    state = convert_state(state)
 
     try:
         if not streetType in streetShorts:
@@ -79,6 +77,12 @@ def convert_address(state, origAddress):
     return (state, streetName + " " + streetType)
 
 
+def convert_state(state):
+    """Normalises states to abbreviation"""
+    if len(state) > 3 or not state in stateShorts:
+        state = stateAbs[state.upper().strip()]
+    
+
 def main():
     parser = argparse.ArgumentParser(
         description="Try and fix street names in addresses for aec_checker.py"
@@ -92,23 +96,21 @@ def main():
     args = parser.parse_args()
 
     rdr = csv.DictReader(args.infile)
-    wtr = csv.DictWriter(args.outfile, rdr.fieldnames + ["origAddress"])
-    wtr.writeheader()
+    wtr = csv.writer(args.outfile, rdr.fieldnames + ["origAddress"])
+    wtr.writerow(rdr.fieldnames + ["origAddress"])
 
     stderr_yet = False
 
     for row in rdr:
-        row["origAddress"] = row["streetName"]
+        og = row["streetName"]
         try:
             (state, streetName) = convert_address(row["state"], row["streetName"])
-            row["state"] = state
-            row["streetName"] = streetName
-            wtr.writerow(row)
+            wtr.writerow([row["givenNames"], row["surname"], row["postcode"], row["suburb"], state, streetName, og])
 
         except (IndexError, AttributeError, TypeError, KeyError) as e:
             if not stderr_yet:
                 print(
-                    "\nThe following entries are anomalous and will need to be manually considered:\n",
+                    "\nThe following entries are anomalous and will need to be manually considered:\n", e,
                     file=sys.stderr,
                 )
                 print(*(rdr.fieldnames), sep="\t", file=sys.stderr)
