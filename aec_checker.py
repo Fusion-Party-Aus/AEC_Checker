@@ -3,6 +3,7 @@ import io
 import os
 from typing import Dict, Optional, Tuple
 
+import selenium.common.exceptions
 from selenium import webdriver
 import time
 from selenium.webdriver.common.by import By
@@ -53,7 +54,7 @@ def get_given_names(membership_row: Dict[str, Optional[str]]):
 
 
 def get_address_components(row: Dict[str, Optional[str]]) -> Tuple[
-    Optional[str],Optional[str], Optional[str], Optional[str]]:
+    Optional[str], Optional[str], Optional[str], Optional[str]]:
     """
     For a membership row, return the street name, suburb, state, and postcode.
     """
@@ -66,12 +67,16 @@ def get_address_components(row: Dict[str, Optional[str]]) -> Tuple[
 
 
 CAPTCHA_INPUT_ID = "textVerificationCode"
+SUCCESS_PANEL_ID = "ctl00_ContentPlaceHolderBody_panelSuccess"
 
 
-def focus_on_captcha_input(driver: webdriver):
-    driver.find_element(
-        By.ID, CAPTCHA_INPUT_ID
-    ).send_keys("")
+def send_driver_to_captcha(driver: webdriver):
+    try:
+        driver.find_element(
+            By.ID, CAPTCHA_INPUT_ID
+        ).send_keys("")
+    except selenium.common.exceptions.ElementNotInteractableException:
+        print(f"Unable to reach element {CAPTCHA_INPUT_ID}")
 
 
 def getAECStatus(
@@ -114,37 +119,50 @@ def getAECStatus(
     elem.clear()
     elem.send_keys(street)
 
-    captcha_entered = False
-    focus_on_captcha_input(driver)
+    captcha_passed = False
+    success_panel = None
+    send_driver_to_captcha(driver)
 
-    while not captcha_entered:
+    while not success_panel and not captcha_passed:
+        time.sleep(0.1)
         try:
-            elem = driver.find_element(
+            captcha_elem = driver.find_element(
                 By.ID, CAPTCHA_INPUT_ID
             )
         except NoSuchElementException:
             print("The browser must have been commandeered")
             break
 
-        if len(elem.get_attribute("value")) == 4:
+        captcha_value = captcha_elem.get_attribute("value")
+        if len(captcha_value) == 4:
             driver.find_element(
                 By.ID, "ctl00_ContentPlaceHolderBody_buttonVerify"
             ).click()
+            print("The button has been clicked to verify the CAPTCHA")
+            time.sleep(0.1)  # Wait for submission to be executed
 
-            try:
-                # Look for the first name tag, if it exist the captcha failed
-                driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_textGivenName")
-            except Exception:
-                # Otherwise we're good. (why is a success state in an exception, brah)
-                captcha_entered = True
-
-            if not captcha_entered:
-                focus_on_captcha_input(driver)
-        else:
-            time.sleep(1)
+            # Wait for the success panel to be loaded, or for the CAPTCHA test to be reset.
+            while not success_panel and not captcha_passed:
+                try:
+                    success_panel = driver.find_element(By.ID, SUCCESS_PANEL_ID)
+                    captcha_passed = True  # The CAPTCHA must have passed
+                except selenium.common.exceptions.NoSuchElementException:
+                    pass
+                if not success_panel:
+                    try:
+                        current_captcha = driver.find_element(By.ID, CAPTCHA_INPUT_ID).get_attribute("value")
+                        if not current_captcha:
+                            # The form has been reset, presumably because the CAPTCHA was wrong
+                            print(f"The CAPTCHA must not have been {captcha_value}")
+                            time.sleep(0.1)  # Finish rendering
+                            send_driver_to_captcha(driver)
+                            break
+                    except selenium.common.exceptions.NoSuchElementException:
+                        captcha_passed = True
+                        print(f"The CAPTCHA was indeed {captcha_value}")
 
     try:
-        driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_panelSuccess")
+        driver.find_element(By.ID, SUCCESS_PANEL_ID)
 
         federal_division = ""
         state_district = ""
@@ -168,11 +186,13 @@ def getAECStatus(
             pass
 
         driver.find_element(By.ID, "ctl00_ContentPlaceHolderBody_buttonBack").click()
+        aec_result = AECResult.PASS if federal_division else AECResult.FAIL
         return AECStatus(
-            AECResult.PASS, federal_division, state_district, local_gov, local_ward
+            aec_result, federal_division, state_district, local_gov, local_ward
         )
 
     except Exception:
+        # No success panel could be found
         out = AECStatus(AECResult.FAIL, "", "", "", "")
         try:
             reason = driver.find_element(
@@ -183,6 +203,8 @@ def getAECStatus(
             elif "street" in reason.text:
                 out = AECStatus(AECResult.FAIL_STREET, "", "", "", "")
         except Exception:
+            print(f"No reason was found for the failed lookup of {given_names} {membership_row['last_name']} "
+                  f"({membership_row['nationbuilder_id']})")
             pass
         driver.find_element(
             By.ID, "ctl00_ContentPlaceHolderBody_buttonTryAgain"
@@ -228,6 +250,8 @@ def check_rows(input_filename, output_filename, skip: int):
                         continue
                     time.sleep(0.1)
                     status = getAECStatus(driver, membership_row)
+                    print(f"The result for {membership_row['first_name']} {membership_row['last_name']} "
+                          f"({membership_row['nationbuilder_id']}) was {status[0]}")
                     output_row.update({"AEC_result": status[0],
                                        "federal_division": status[1],
                                        "state_division": status[2],
