@@ -139,7 +139,7 @@ def getAECStatus(
                 By.ID, "ctl00_ContentPlaceHolderBody_buttonVerify"
             ).click()
             print("The button has been clicked to verify the CAPTCHA")
-            time.sleep(0.1)  # Wait for submission to be executed
+            time.sleep(0.15)  # Wait for submission to be executed
 
             # Wait for the success panel to be loaded, or for the CAPTCHA test to be reset.
             while not success_panel and not captcha_passed:
@@ -152,8 +152,7 @@ def getAECStatus(
                     try:
                         current_captcha = driver.find_element(By.ID, CAPTCHA_INPUT_ID).get_attribute("value")
                         if not current_captcha:
-                            # The form has been reset, presumably because the CAPTCHA was wrong
-                            print(f"The CAPTCHA must not have been {captcha_value}")
+                            # The form has been reset, as part of the submission process
                             time.sleep(0.1)  # Finish rendering
                             send_driver_to_captcha(driver)
                             break
