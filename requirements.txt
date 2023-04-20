@@ -1,1 +1,3 @@
-selenium
+selenium>=4,<5
+# https://github.com/SergeyPirogov/webdriver_manager
+webdriver-manager
