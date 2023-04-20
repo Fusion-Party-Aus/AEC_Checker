@@ -159,29 +159,27 @@ def main():
     parser.add_argument("--outfile", default="output.csv")
     args = parser.parse_args()
 
-    driver = get_driver()
-    driver.get("https://check.aec.gov.au/")
+    with get_driver() as driver:
+        driver.get("https://check.aec.gov.au/")
 
-    writer = csv.writer(
-        open(
-            args.outfile,
-            "a",
-            newline="",
-        )
-    )
-    count = 0
-    with open(args.infile) as csvfile:
-        reader = csv.reader(csvfile, delimiter=",")
-        for row in reader:
-            count += 1
-            if count <= 1 + args.skip:
-                writer.writerow(row)
-                continue
-            time.sleep(0.1)
-            status = getAECStatus(driver, *row[:6])
-            writer.writerow(row + [i for i in status])
-    writer.close()
-    driver.close()
+        with csv.writer(
+            open(
+                args.outfile,
+                "a",
+                newline="",
+            )
+        ) as writer:
+            count = 0
+            with open(args.infile) as csvfile:
+                reader = csv.reader(csvfile, delimiter=",")
+                for row in reader:
+                    count += 1
+                    if count <= 1 + args.skip:
+                        writer.writerow(row)
+                        continue
+                    time.sleep(0.1)
+                    status = getAECStatus(driver, *row[:6])
+                    writer.writerow(row + [i for i in status])
 
 
 if __name__ == "__main__":
