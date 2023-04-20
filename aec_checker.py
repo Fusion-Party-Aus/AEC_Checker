@@ -212,7 +212,7 @@ def getAECStatus(
         return out
 
 
-OUTPUT_FIELDS = ["first_name", "middle_name", "last_name", "nationbuilder_id",
+OUTPUT_FIELDS = ["first_name", "middle_name", "last_name", "nationbuilder_id", "nationbuilder_link",
                  "AEC_result", "federal_division", "state_division", "local_government", "local_ward"]
 
 
@@ -222,7 +222,8 @@ def get_driver():
     return driver
 
 
-def check_rows(input_filename, output_filename, skip: int):
+def check_rows(input_filename, output_filename, skip: int,
+               nationbuilder_base="https://futureparty.nationbuilder.com/admin/signups/"):
     with get_driver() as driver:
         driver.get("https://check.aec.gov.au/")
         with io.open(input_filename) as csvfile:
@@ -242,6 +243,7 @@ def check_rows(input_filename, output_filename, skip: int):
                 for membership_row in reader:
                     row_count += 1
                     output_row = {k: membership_row.get(k) for k in OUTPUT_FIELDS}
+                    output_row["nationbuilder_link"] = nationbuilder_base + str(membership_row["nationbuilder_id"])
                     if row_count <= skip:
                         # Assume that this has already been written as output.
                         continue
