@@ -6,9 +6,9 @@ from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import NoSuchElementException
 import csv
 import argparse
-import typing
 import collections
 from enum import Enum
+from webdriver_manager.firefox import GeckoDriverManager
 import sys
 
 
@@ -142,8 +142,16 @@ def getAECStatus(
         return out
 
 
+def get_driver():
+    # https://github.com/SergeyPirogov/webdriver_manager#use-with-firefox
+    driver = webdriver.Firefox(executable_path=GeckoDriverManager().install())
+    return driver
+
+
 def main():
-    parser = argparse.ArgumentParser(description="automate AEC checking")
+    parser = argparse.ArgumentParser(
+        description="This program will iterate through a CSV file of members, and submit their details into the AEC "
+                    "website, to confirm their enrollment details.")
     parser.add_argument(
         "--skip", type=int, default=0, help="skip entries you've already seen"
     )
@@ -151,7 +159,7 @@ def main():
     parser.add_argument("--outfile", default="output.csv")
     args = parser.parse_args()
 
-    driver = webdriver.Firefox()
+    driver = get_driver()
     driver.get("https://check.aec.gov.au/")
 
     writer = csv.writer(
