@@ -16,6 +16,7 @@ from enum import Enum
 from webdriver_manager.firefox import GeckoDriverManager
 import sys
 
+
 class AECResult(Enum):
     PASS = "Pass"
     PARTIAL = "Partial"
