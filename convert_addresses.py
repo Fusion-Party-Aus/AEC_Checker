@@ -44,6 +44,7 @@ streetTypes = {
 stateShorts = set(stateAbs.values())
 streetShorts = set(streetTypes.values())
 
+
 def convert_address(state, origAddress):
     """Normalises states to abbreviation, and
     extracts normalised street names from addresses.
@@ -81,7 +82,7 @@ def convert_state(state):
     """Normalises states to abbreviation"""
     if len(state) > 3 or not state in stateShorts:
         state = stateAbs[state.upper().strip()]
-    
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -105,12 +106,23 @@ def main():
         og = row["streetName"]
         try:
             (state, streetName) = convert_address(row["state"], row["streetName"])
-            wtr.writerow([row["givenNames"], row["surname"], row["postcode"], row["suburb"], state, streetName, og])
+            wtr.writerow(
+                [
+                    row["givenNames"],
+                    row["surname"],
+                    row["postcode"],
+                    row["suburb"],
+                    state,
+                    streetName,
+                    og,
+                ]
+            )
 
         except (IndexError, AttributeError, TypeError, KeyError) as e:
             if not stderr_yet:
                 print(
-                    "\nThe following entries are anomalous and will need to be manually considered:\n", e,
+                    "\nThe following entries are anomalous and will need to be manually considered:\n",
+                    e,
                     file=sys.stderr,
                 )
                 print(*(rdr.fieldnames), sep="\t", file=sys.stderr)

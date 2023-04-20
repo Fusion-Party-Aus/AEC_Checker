@@ -11,6 +11,7 @@ import collections
 from enum import Enum
 import sys
 
+
 class AECResult(Enum):
     PASS = "Pass"
     PARTIAL = "Partial"
