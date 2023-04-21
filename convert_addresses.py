@@ -48,6 +48,7 @@ streetShorts = set(streetTypes.values())
 def convert_address(state, origAddress):
     """Normalises states to abbreviation, and
     extracts normalised street names from addresses.
+    Returns (state, street_address)
     May raise IndexError, AttributeError, TypeError, KeyError"""
 
     street = ""
@@ -66,7 +67,7 @@ def convert_address(state, origAddress):
     state = convert_state(state)
 
     try:
-        if not streetType in streetShorts:
+        if streetType not in streetShorts:
             streetType = streetTypes[streetType]
     except Exception as e:
         for k, v in streetTypes.items():
@@ -74,14 +75,16 @@ def convert_address(state, origAddress):
                 streetType = v
                 break
         else:
+            print(e, file=sys.stderr)
             raise KeyError
     return (state, streetName + " " + streetType)
 
 
 def convert_state(state):
     """Normalises states to abbreviation"""
-    if len(state) > 3 or not state in stateShorts:
+    if len(state) > 3 or state not in stateShorts:
         state = stateAbs[state.upper().strip()]
+    return state
 
 
 def main():
